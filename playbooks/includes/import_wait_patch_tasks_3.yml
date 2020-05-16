@@ -1,0 +1,5 @@
+  - name: add hostname to standard group name
+    add_host:
+      name: "{{ item }}"
+      groups: standard1
+    with_items: "{{ ansible_play_batch }}"

@@ -1,0 +1,7 @@
+---
+  - name: There are no pretasks/post tasks set 
+    hosts: localhost
+    gather_facts:
+    tasks:
+    - debug:
+       msg: "There is no pretasks/post tasks set for this patching run."

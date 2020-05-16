@@ -1,0 +1,10 @@
+---
+run_task: 'true'
+job_name: 'PatchGroup2'
+inventory: 'Prometheus'
+host_location: /tmp/patchstatus
+apfw_wait: '10'
+apfw_wait_hours: 3
+awx_host: 'AWX'
+cleanup_archive: 'true'
+tower_jobcredential: 'Prometheus_Admin_Credentials'

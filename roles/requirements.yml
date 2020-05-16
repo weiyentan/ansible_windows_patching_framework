@@ -1,0 +1,28 @@
+---
+ 
+  - src: 
+    name: install_winupdates
+  
+  - src:
+    name: configure_win_failovercluster
+
+  - src: 
+    name: install_win_baseline
+  
+  - src: 
+    name: apfw_remove_patch_status
+  
+  - src: 
+    name: archive_win_patch_log
+  
+  - src: 
+    name: configure_win_baseline
+
+  - src: 
+    name: install_pswindowsupdate_module
+  
+  - src: 
+    name: checkmk_manage_downtime
+  
+  - src: 
+    name: checkmk_manage_downtime

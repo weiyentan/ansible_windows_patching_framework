@@ -1,0 +1,55 @@
+---
+  #- name: Transfer file to server
+  #  copy:
+  #   src: ../files/start-apfwcopyfiletohost.ps1
+  #   dest: "/tmp/start-apfwcopyfiletohost_{{ job_name }}.ps1"
+     
+  #- name: start transfer file to management host  tasks 
+  #  raw: "pwsh /tmp/start-apfwcopyfiletohost_{{ job_name }}.ps1  -managementserver {{ management_server }} -searchterm {{ search_term }} -limit {{ management_server }} -inventory {{ inventory }} -towerusername {{ tower_username }} -towerpwd {{ tower_password }} -towercredential {{ credential_name }} -towerservername {{ awx_host }} -towerjobcredential {{credential_name}} -destinationlogpath {{ destination_logpath }} "
+  #  no_log: False
+  #  register: command_result
+      
+  #- name: debug
+  #  debug:
+  #   msg: "{{ command_result | regex_replace(tower_username) | regex_replace(tower_password) }}" 
+     
+  - name: run Archive Job 
+    raw:  sudo tower-cli job launch -J  'APFW - Helper playbook - Transfer archive to management host' --format json --limit "$limit , localhost, {{ awx_host }}" --credential {{credential_name}} --inventory {{inventory}} -e " job_name= management_server={{management_server}} awx_host={{awx_host}} search_term={{search_term}} destination_logpath={{destination_logpath}}" --wait
+
+  # - name: Wait for Job to Finish
+  #  tower_job_wait:
+  #   job_id: "{{ command_result.stdout }}"
+  #   timeout: no
+  #   tower_verify_ssl: no
+
+  #- name: Remove Transfer Script
+  #  file:
+  #      path: /tmp/start-apfwcopyfiletohost_"{{ job_name }}".ps1 # required. Path to the file being managed.
+  #      state: absent # not required. choices: absent;directory;file;hard;link;touch. If C(directory), all intermediate subdirectories will be created if they do not exist. Since Ansible 1.7 they will be created with the supplied permissions. If C(file), the file will NOT be created if it does not exist; see the C(touch) value or the M(copy) or M(template) module if you want that behavior.  If C(link), the symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent), directories will be recursively deleted, and files or symlinks will be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does not exist as the state did not change. If C(touch) (new in 1.4), an empty file will be created if the C(path) does not exist, while an existing file or directory will receive updated file access and modification times (similar to the way `touch` works from the command line).
+
+
+  #- name: Remove Install Patching Script
+  #  file:
+  #    path: /tmp/start-apfwcopyfiletohost_{{ job_name }}.ps1
+  #    state: absent
+  # - name: Launch Job Template to transfer archive files to management host
+  #  tower_job_launch:
+  #    job_template: "APFW - Helper playbook - Transfer archive to management host"
+  #    inventory: "{{ inventory }}"
+  #    credential: "{{ tower_jobcredential }}"
+  #    limit: "{{ management_server }}"
+  #    tower_username: "{{ tower_username }}"
+  #    tower_password: "{{ tower_password }}"
+  #    tower_verify_ssl: no
+  #    extra_vars: 
+  #      - { management_server: "{{ management_server }}" , search_term: "{{ search_term }}" , destination_logpath: "{{ destination_logpath }}" }
+  #  register: job
+  
+  
+  # - name: Wait for Job to Finish
+  #  tower_job_wait:
+  #   job_id: "{{ job.id }}"
+  #   timeout: no
+  #  tower_verify_ssl: no
+
+  

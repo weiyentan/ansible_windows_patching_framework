@@ -1,0 +1,5 @@
+---
+management_server: 'MGMT02'
+tower_jobcredential: 'Prometheus_Admin_Credentials'
+awx_host: 'AWX'
+destination_logpath: E:\patch_logs\\Failover\

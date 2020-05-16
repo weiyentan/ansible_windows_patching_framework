@@ -1,0 +1,7 @@
+---
+   - name: install winservice baseline 
+     hosts: Failover1,Failover2
+     ignore_errors: yes
+     gather_facts: false
+     roles:
+       - install_win_baseline

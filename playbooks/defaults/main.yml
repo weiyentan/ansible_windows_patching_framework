@@ -1,0 +1,17 @@
+---
+run_task: 'true'
+job_name1: 'Job1'
+job_name2: 'Job2'
+job_name3: 'Job3'
+host_location: /tmp/patchstatus
+apfw_wait_hours1: 3
+awx_host: 'AWX'
+cleanup_archive: 'true'
+pretasks_common: 'patching/empty_debug.yml'
+pretasks_1: 'patching/empty_debug.yml'
+posttasks_1: 'patching/empty_debug.yml'
+pretasks_2: 'patching/empty_debug.yml'
+posttasks_2: 'patching/empty_debug.yml'
+pretasks_3: 'patching/empty_debug.yml'
+posttasks_3: 'patching/empty_debug.yml' 
+posttasks_common: 'patching/empty_debug.yml' 

@@ -1,0 +1,75 @@
+---
+  - name: APFW - Create folder in tmp directory
+    vars:
+      job_name: 'job1'
+    hosts: localhost
+    gather_facts: false
+    connection: local
+    tasks:
+      - name: Create a folder called patchstatus on container
+        file:
+          path: /tmp/patchstatus/{{ job_name}}
+          state: directory
+          mode: 0755
+  
+  - name: Register items in group
+    hosts: all
+    gather_facts: no
+    tasks:
+     - name: "add hostname to standard group name"
+       add_host:
+           name: "{{ item }}" # required. The hostname/ip of the host to add to the inventory, can include a colon and a port number.
+           groups: windows # not required. The groups to add the hostname to, comma separated.
+       with_items: "{{ansible_play_batch}}"
+       when:  (item != "{{ awx_host }}") and (item != 'localhost') 
+
+  - name:  APFW - Fetch Patching status Files from Node
+    vars:
+      job_name: 'job1'
+      awx_host: 'AWX'
+    hosts: windows
+    gather_facts: false
+    tasks:
+      - name: APFW - Fetch Patching Status File from Computer
+        fetch:
+          src: c:\windows\temp\apfw_{{ inventory_hostname }}.xml
+          dest: /tmp/patchstatus/{{ job_name }}/apfw_{{ inventory_hostname }}.xml
+          flat: yes
+  
+  ## Second part of Transfer 
+  - name: APFW - Create path on Host
+    vars:
+      job_name: 'job1'
+      host_location: /tmp/patchstatus
+      awx_host: 'AWX'
+    gather_facts: false
+    hosts: "{{ awx_host }}"
+    tasks:
+      - name: Create temporary folder
+        file:
+          path: "{{ host_location }}/{{ job_name }}"
+          state: directory
+          mode: 0755
+
+  - name: APFW - Transfer files from container to host
+    vars:
+      job_name: 'job1'
+      host_location: /tmp/patchstatus
+      awx_host: 'AWX'
+    gather_facts: false
+    hosts: "{{ awx_host }}"
+    tasks:
+      - name: copy files from container to host 
+        copy:
+          src: /tmp/patchstatus/{{ job_name }}
+          dest: "{{ host_location }}" 
+  
+  - name: Remove Patchstatus directory on container
+    gather_facts: false
+    hosts: localhost
+    connection: local
+    tasks:
+      - name: Remove temporary  directory on container
+        file:
+          path: /tmp/patchstatus/{{ job_name }}
+          state: absent

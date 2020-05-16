@@ -1,0 +1,217 @@
+---
+  - name: Set Monitoring downtime - PatchGroup 1
+    hosts: "{{ Patchgroup1}}"
+    tasks:
+      - include_role:
+          name: checkmk_manage_downtime
+        vars:
+          monitoring_server: "{{ monitoring_server}}"
+          downtime_action: add
+          monitoring_downtime_reason: "{{ monitoring_downtime_reason }}"
+          monitoring_downtime_duration_secs: "{{ monitoring_downtime_duration_secs_1 }}"
+        when: monitoring_suppression_on == "yes" 
+
+
+  - name: Pretasks for PatchGroup1
+    import_playbook: "{{ pretasks_1 }}"
+
+  - name: Common Pretasks
+    import_playbook: "{{ pretasks_common }}"
+
+  - name: Patch Servers PatchGroup1
+    hosts: "{{ Patchgroup1}}"
+    roles:
+      - apfw_remove_patch_status
+      - {role: install_winupdates, mode: 'duration' , apfw_duration: "{{ apfw_duration1 }}" }
+     
+  - name: Prepare Wait Patch groups - PatchGroup 1
+    hosts: "{{Patchgroup1}}"
+    vars:
+      job_name: "{{job_name1}}"
+    gather_facts: false
+    tasks:
+    - import_tasks: includes/import_wait_patch_tasks_1.yml
+
+  - name: Set up Wait script - PatchGroup 1 
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    vars:
+      job_name: "{{job_name1}}"
+      inventory: "{{inventory}}"
+      host_location: /tmp/patchstatus
+      apfw_wait: "{{apfw_wait}}"
+      apfw_wait_hours: "{{waithours1}}"
+      awx_host: "{{ awx_host }}"
+      cleanup_archive: 'true'
+      tower_jobcredential: "{{credential_name}}"
+    tasks:
+    - name: import tower creds
+      include_vars: vars/tower_vault_creds.yml
+      no_log: True
+
+    - import_tasks: includes/import_wait_patch_tasks_2.yml
+  
+  - name: Post_tasks for PatchGroup1
+    import_playbook: "{{ posttasks_1 }}"
+  ##PatchGroup2
+  - name: Set Monitoring downtime - Patch Group 2
+    hosts: "{{ Patchgroup2 }}"
+    tasks:
+      - include_role:
+           name: checkmk_manage_downtime
+        vars:
+          monitoring_server: "{{ monitoring_server}}"
+          downtime_action: add
+          monitoring_downtime_reason: "{{ monitoring_downtime_reason }}"
+          monitoring_downtime_duration_secs: "{{ monitoring_downtime_duration_secs_1 }}"
+        when: monitoring_suppression_on == "yes" 
+
+  
+  - name: Pretasks for PatchGroup2
+    import_playbook: "{{ pretasks_2 }}"
+
+  - name: Patch Servers PatchGroup2
+    hosts: "{{ Patchgroup2 }}"
+    roles:
+      - apfw_remove_patch_status
+      - {role: install_winupdates, mode: 'duration' , apfw_duration: "{{ apfw_duration2 }}" }
+
+  - name: Prepare Wait  group - PatchGroup 2
+    hosts: "{{Patchgroup2}}"
+    vars:
+      job_name: "{{job_name2}}"
+    gather_facts: false
+    tasks:
+    - import_tasks: includes/import_wait_patch_tasks_3.yml
+
+  - name: Set up Wait script - PatchGroup 2 
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    vars:
+      run_task: 'true'
+      job_name: "{{job_name2}}"
+      inventory: "{{inventory}}"
+      host_location: /tmp/patchstatus
+      apfw_wait: "{{wait}}"
+      apfw_wait_hours: "{{waithours2}}"
+      awx_host: "{{ awx_host }}"
+      cleanup_archive: 'true'
+      tower_jobcredential: "{{credential_name}}"
+    tasks:  
+
+    - name: import tower creds
+      include_vars: vars/tower_vault_creds.yml
+      no_log: True
+    
+    - import_tasks: includes/import_wait_patch_tasks_4.yml
+
+  - name: Post tasks for PatchGroup2
+    import_playbook: "{{ posttasks_2 }}"
+
+  ##PatchGroup3
+  - name: Set Monitoring downtime - PatchGroup 3
+    hosts: "{{ Patchgroup3}}"
+    include_role:
+      name: checkmk_manage_downtime
+    vars:
+       monitoring_server: "{{ monitoring_server}}"
+       downtime_action: add
+       monitoring_downtime_reason: "{{ monitoring_downtime_reason }}"
+       monitoring_downtime_duration_secs: "{{ monitoring_downtime_duration_secs_1 }}"
+    when: monitoring_suppression_on == "yes" 
+
+
+  - name: Pretasks for PatchGroup 3
+    import_playbook: "{{ pretasks_3 }}"
+
+  - name: Patch Servers PatchGroup 3
+    hosts: "{{ Patchgroup3 }}"
+    roles:
+      - apfw_remove_patch_status
+      - {role: install_winupdates, mode: 'duration' , apfw_duration: "{{ apfw_duration3 }}" }
+
+  - name: Prepare Wait  group - PatchGroup 3
+    hosts: "{{Patchgroup3}}"
+    vars:
+      job_name: "{{job_name3}}"
+    gather_facts: false
+    tasks:
+    - import_tasks: includes/import_wait_patch_tasks_3.yml
+
+  - name: Set up Wait script - PatchGroup3
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    vars:
+      run_task: 'true'
+      job_name: "{{job_name3}}"
+      inventory: "{{inventory}}"
+      host_location: /tmp/patchstatus
+      apfw_wait: "{{wait}}"
+      apfw_wait_hours: "{{waithours3}}"
+      awx_host: "{{ awx_host }}"
+      cleanup_archive: 'true'
+      tower_jobcredential: "{{credential_name}}"
+    tasks:  
+
+    - name: import tower creds
+      include_vars: vars/tower_vault_creds.yml
+      no_log: True
+    
+    - import_tasks: includes/import_wait_patch_tasks_4.yml
+
+  - name: Posttasks for PatchGroup 3
+    import_playbook: "{{ posttasks_3 }}"
+
+
+  - name: Common Post tasks 
+    import_playbook: "{{ posttasks_common }}"
+
+  - name: Archive log files
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    roles:
+     - { role: archive_win_patch_log, job_name: 'PatchGroup1' , search_term: 'apfw_log_PatchGroup1*'  }
+     - { role: archive_win_patch_log, job_name: 'PatchGroup2' , search_term: 'apfw_log_PatchGroup2*'  }
+     - { role: archive_win_patch_log, job_name: 'PatchGroup3' , search_term: 'apfw_log_PatchGroup3*'  }
+
+  - name: Transfer log files to  Management Server 
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    tasks: 
+    
+      - name: run Archive Job 
+        raw:  sudo tower-cli job launch -J  'APFW - Helper playbook - Transfer archive to management host' --format json --limit "{{management_server}} , localhost, {{ awx_host }}" --credential {{credential_name}} --inventory {{inventory}} -e "management_server={{management_server}} awx_host={{awx_host}} search_term='apfw*' destination_logpath={{destination_logpath}}"
+
+  - name: Remove Monitoring downtime - PatchGroup 1
+    hosts: "{{ Patchgroup1}}"
+    tasks:
+      - include_role:
+          name: checkmk_manage_downtime
+        vars:
+          monitoring_server: "{{ monitoring_server}}"
+          downtime_action: remove
+        when: monitoring_suppression_on == "yes" 
+
+
+  - name: Remove Monitoring downtime - PatchGroup 2
+    hosts: "{{ Patchgroup2}}"
+    tasks:
+     - include_role:
+         name: checkmk_manage_downtime
+       vars:
+         monitoring_server: "{{ monitoring_server}}"
+         downtime_action: remove
+       when: monitoring_suppression_on == "yes" 
+
+  - name: Remove Monitoring downtime - PatchGroup 3
+    hosts: "{{ Patchgroup3}}"
+    tasks:
+
+    -  include_role:
+         name: checkmk_manage_downtime
+       vars:
+         monitoring_server: "{{ monitoring_server}}"
+         downtime_action: remove
+       when: monitoring_suppression_on == "yes" 
+
+  

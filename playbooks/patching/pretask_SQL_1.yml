@@ -1,0 +1,8 @@
+---
+  - name: Move Failover Cluster to SQL02
+    hosts: SQL01
+    gather_facts: no
+    roles:
+     - {role: configure_win_failovercluster, win_sql_destination: SQL02 }
+
+ 

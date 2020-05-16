@@ -1,0 +1,27 @@
+---
+  - name: Transfer file to server
+    copy:
+     src: ../files/start-apfwpatching.ps1
+     dest: "/tmp/start-apfwpatching_{{ job_name }}.ps1"
+      
+  - name: start patching tasks 
+    command: "pwsh /tmp/start-apfwpatching_{{ job_name }}.ps1 -duration {{ duration }} -limit {{ limit }} -apfw_waittime {{ apfw_waittimemin }} -jobtemplate {{ jobtemplate }} -inventory {{ inventory }} -towerusername {{ tower_username }} -towerpwd {{ tower_password }} -towercredential {{ tower_jobcredential }}"
+    no_log: True
+    register: command_result
+      
+  - name: debug
+    debug:
+     msg: "{{ command_result | regex_replace(tower_username) | regex_replace(tower_password) }}" # used to hide the credentials 
+     
+         
+  - name: Wait for Job to Finish
+    tower_job_wait:
+     job_id: "{{ command_result.stdout }}"
+     timeout: no
+     tower_verify_ssl: no
+
+  - name: Remove Install Patching Script
+    file:
+      path: /tmp/start-apfwpatching_{{ job_name }}.ps1
+      state: absent
+

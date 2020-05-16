@@ -1,0 +1,7 @@
+---
+  - name: Patching - Move Failover Cluster to SQL01 
+    hosts: SQL02
+    gather_facts: no
+    roles:
+     - {role: configure_win_failovercluster, win_sql_destination: 'SQL01' }
+    

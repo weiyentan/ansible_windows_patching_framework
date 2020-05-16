@@ -1,0 +1,114 @@
+---
+  - name: Set Monitoring downtime
+    hosts: "{{ Patchgroup1}}"
+    tasks:
+      - include_role:
+          name: checkmk_manage_downtime
+        vars:
+          monitoring_server: "{{ monitoring_server}}"
+          downtime_action: add
+          monitoring_downtime_reason: "{{ monitoring_downtime_reason }}"
+          monitoring_downtime_duration_secs: "{{ monitoring_downtime_duration_secs_1 }}"
+        when: monitoring_suppression_on == "yes"  
+  
+  - name: Common Pre_tasks
+    import_playbook: "{{ pretasks_common }}"
+
+  - name: Pretasks for PatchGroup1
+    import_playbook: "{{ pretasks_1 }}"
+
+  - name: Patch Servers PatchGroup1
+    hosts: "{{ Patchgroup1}}"
+    roles:
+      - install_pswindowsupdate_module      
+      - apfw_remove_patch_status
+      - {role: install_winupdates, mode: 'duration' , apfw_duration: "{{ apfw_duration }}" }
+     
+  - name: Prepare Wait Patch groups - PatchGroup 1
+    hosts: "{{Patchgroup1}}"
+    vars:
+      job_name: "{{job_name1}}"
+    gather_facts: false
+    tasks:
+    - import_tasks: includes/import_wait_patch_tasks_1.yml
+      when: no_wait == "false"
+
+  - name: Set up Wait script - PatchGroup 1
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    vars:
+      job_name: "{{job_name1}}"
+      inventory: "{{inventory}}"
+      host_location: /tmp/patchstatus
+      apfw_wait: "{{apfw_wait}}"
+      apfw_wait_hours: "{{waithours1}}"
+      awx_host: "{{ awx_host }}"
+      cleanup_archive: 'true'
+      tower_jobcredential: "{{credential_name}}"
+    tasks:
+    - name: import tower creds
+      include_vars: vars/tower_vault_creds.yml
+      no_log: True
+
+    - import_tasks: includes/import_wait_patch_tasks_2.yml
+      when: no_wait == "false"
+    
+  - name: Post_tasks for PatchGroup1
+    import_playbook: "{{ posttasks_1 }}"
+    when: no_wait == "false"
+
+  
+  - name: Archive log files
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    tasks:
+     - include_role: 
+         name: archive_win_patch_log
+       vars:
+         job_name: 'PatchGroup1'
+         search_term: 'apfw_log_{{job_name1}}*'
+       when: no_wait == "false"
+  
+  - name: Transfer log files to  Management Server 
+    hosts: "{{awx_host}}"
+    gather_facts: false
+    tasks: 
+    - name: run Archive Job 
+      raw :  sudo tower-cli job launch -J  'APFW - Helper playbook - Transfer archive to management host' --format json --limit "{{management_server}} , localhost, {{ awx_host }}" --credential {{credential_name}} --inventory {{inventory}} -e "management_server={{management_server}} awx_host={{awx_host}} search_term='apfw*' destination_logpath={{destination_logpath}}"
+      when: no_wait == 'false'
+
+  - name: Remove Monitoring downtime
+    hosts: "{{ Patchgroup1}}"
+    tasks:
+     - include_role:
+        name: checkmk_manage_downtime
+       vars:
+        monitoring_server: "{{ monitoring_server}}"
+        downtime_action: remove
+       when: monitoring_suppression_on == "yes" and no_wait == 'false'
+
+
+  #- name: Transfer log file to  Management Server - PatchGroup 1
+   # hosts: "{{awx_host}}"
+   # vars:
+   #  inventory: "{{inventory}}"
+   #  search_term: "apfw_log_{{job_name1}}*"
+   #  limit: "{{Patchgroup1}}"
+   #  job_name: "{{job_name1}}"
+   #  management_server: "{{management_server}}"
+   #  tower_jobcredential: "{{ credential_name }}"
+   #  awx_host: "{{ awx_host }}"
+   #  archive_settings: "{{archive_settings}}"
+   # gather_facts: false
+   # tasks: 
+
+   # - name: import tower creds
+   #   include_vars: vars/tower_vault_creds.yml
+   #   no_log: True
+
+   # - name: import common vars
+   #  include_vars: vars/common_transfer_host_vars.yml
+    
+   # - import_tasks: includes/hlp_job_launch_archiving.yml
+   #   when: no_wait == "false"
+

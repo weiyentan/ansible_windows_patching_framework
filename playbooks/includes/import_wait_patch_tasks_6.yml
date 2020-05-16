@@ -1,0 +1,36 @@
+  - name: Create temporary folder
+    file:
+      path: "{{ host_location }}/{{ job_name }}"
+      state: directory
+      mode: 0755
+          
+  - name: create collection file
+    file:
+      path:  "{{ host_location }}/{{job_name}}/collection_{{ job_name}}.txt"
+      state: touch
+      
+  - name: Register date on ansible Host
+    shell: "date +%d%m%y"
+    register: timestamp 
+      
+  - name: add host files to collection
+    blockinfile:
+      path: "{{ host_location }}/{{ job_name }}/collection_{{ job_name }}.txt"
+      block: | 
+        {{ item }}
+      marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item }}"
+    with_items:  "{{ groups['standard2'] }}"
+
+  - name: Copy wait patch to server
+    copy:
+      src: files/apfwwaitpatching.ps1
+      dest: "{{ host_location }}/{{ job_name }}/apfwwaitpatching_{{ job_name }}.ps1"
+      
+  - name: Run Wait Patch
+    raw: "pwsh {{ host_location }}/{{ job_name }}/apfwwaitpatching_{{ job_name }}.ps1 -hours {{ apfw_wait_hours }} -job {{ job_name }}  -wait {{ apfw_wait }} -toweruser {{ tower_username}} -towerpwd {{ tower_password }} -inventory {{ inventory }} -towerservername {{ awx_host }} -towercredential {{ tower_jobcredential }}"
+    no_log: True
+    register: command_result
+
+  - name: debug
+    debug:
+     msg: "{{ command_result | regex_replace(tower_username) | regex_replace(tower_password) }}" # used to hide the credentials 

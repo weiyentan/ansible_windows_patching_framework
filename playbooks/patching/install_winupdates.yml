@@ -1,0 +1,14 @@
+---
+  - name: Create baseline for servers
+    hosts: all 
+    gather_facts: no
+    roles:
+     - apfw_remove_patch_status
+     - install_win_baseline
+     
+  - name: Patching  
+    hosts: all
+    gather_facts: no
+    roles:
+     - install_pswindowsupdate_module
+     - {role: install_winupdates, apfw_enddate: "{{apfw_enddate}}", apfw_endtime: "{{apfw_endtime}}" , apfw_waittime: "{{apfw_waittime}}" }
